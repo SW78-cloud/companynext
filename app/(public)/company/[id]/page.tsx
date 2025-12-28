@@ -32,8 +32,9 @@ async function getCompany(id: string) {
     return company;
 }
 
-export default async function CompanyPage({ params }: { params: { id: string } }) {
-    const company = await getCompany(params.id);
+export default async function CompanyPage({ params }: { params: Promise<{ id: string }> }) {
+    const { id } = await params;
+    const company = await getCompany(id);
 
     if (!company) {
         notFound();

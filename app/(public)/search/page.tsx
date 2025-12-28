@@ -1,9 +1,8 @@
 import { Suspense } from 'react';
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
 import { Building2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 async function SearchResults({ query }: { query: string }) {
     if (!query) {
@@ -76,12 +75,13 @@ async function SearchResults({ query }: { query: string }) {
     }
 }
 
-export default function SearchPage({
+export default async function SearchPage({
     searchParams,
 }: {
-    searchParams: { q?: string };
+    searchParams: Promise<{ q?: string }>;
 }) {
-    const query = searchParams.q || '';
+    const { q } = await searchParams;
+    const query = q || '';
 
     return (
         <div className="container px-4 py-8">

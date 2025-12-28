@@ -1,38 +1,27 @@
-import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
+import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
+import { decrypt } from '@/lib/session';
 
-const isPublicRoute = createRouteMatcher([
-    '/',
-    '/search(.*)',
-    '/company/(.*)',
-    '/compare(.*)',
-    '/sources(.*)',
-    '/about(.*)',
-    '/privacy(.*)',
-    '/terms(.*)',
-    '/login(.*)',
-    '/register(.*)',
-    '/api/companies/search(.*)',
-    '/api/companies/(.*)/metrics(.*)',
-    '/api/companies/(.*)/cases(.*)',
-]);
+export async function middleware(request: NextRequest) {
+    const protectedRoutes = ['/my-account', '/submit-review', '/admin', '/settings'];
+    const path = request.nextUrl.pathname;
 
-const isAdminRoute = createRouteMatcher(['/admin(.*)']);
+    const isProtected = protectedRoutes.some((route) => path.startsWith(route));
 
-export default clerkMiddleware(async (auth, req) => {
-    // Protect non-public routes
-    if (!isPublicRoute(req)) {
-        await auth.protect();
+    if (isProtected) {
+        const cookie = request.cookies.get('session')?.value;
+        const session = cookie ? await decrypt(cookie) : null;
+
+        if (!session?.userId) {
+            const loginUrl = new URL('/login', request.url);
+            loginUrl.searchParams.set('from', path);
+            return NextResponse.redirect(loginUrl);
+        }
     }
 
-    // Additional admin route protection will be handled in the page components
-    // via role checking from the database
-});
+    return NextResponse.next();
+}
 
 export const config = {
-    matcher: [
-        // Skip Next.js internals and all static files, unless found in search params
-        '/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)',
-        // Always run for API routes
-        '/(api|trpc)(.*)',
-    ],
+    matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)'],
 };

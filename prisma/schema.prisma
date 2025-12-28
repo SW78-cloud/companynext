@@ -30,19 +30,25 @@ enum IngestionStatus {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  clerkUserId String @unique
-  role      UserRole @default(VISITOR)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  name         String?
+  role         UserRole @default(VISITOR)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   reviews              Review[]
   contractorPlacements ContractorPlacement[]
   auditLogs            AuditLog[]
 
   @@index([email])
-  @@index([clerkUserId])
+}
+
+model RateLimit {
+  key       String   @id
+  count     Int      @default(0)
+  resetAt   DateTime
 }
 
 model Company {

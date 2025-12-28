@@ -5,11 +5,13 @@ import { formatErrorResponse, NotFoundError, ValidationError } from '@/lib/error
 
 export async function GET(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
+        const { id } = await params;
+
         // Validate company ID
-        const validatedParams = companyIdSchema.parse({ id: params.id });
+        const validatedParams = companyIdSchema.parse({ id });
 
         // Get company with aggregated metrics
         const company = await prisma.company.findUnique({

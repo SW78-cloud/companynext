@@ -1,4 +1,5 @@
 import prisma from './db';
+import { Prisma } from '@prisma/client';
 
 export type AuditAction = 'CREATE' | 'UPDATE' | 'DELETE' | 'VIEW';
 
@@ -19,8 +20,8 @@ export async function createAuditLog(data: AuditLogData) {
                 action: data.action,
                 entityType: data.entityType,
                 entityId: data.entityId,
-                beforeJson: data.beforeJson ?? null,
-                afterJson: data.afterJson ?? null,
+                beforeJson: (data.beforeJson ?? Prisma.JsonNull) as Prisma.InputJsonValue,
+                afterJson: (data.afterJson ?? Prisma.JsonNull) as Prisma.InputJsonValue,
             },
         });
     } catch (error) {

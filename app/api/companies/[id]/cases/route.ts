@@ -5,13 +5,15 @@ import { formatErrorResponse, NotFoundError, ValidationError } from '@/lib/error
 
 export async function GET(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
+        const { id } = await params;
+
         // Parse and validate query parameters
         const searchParams = Object.fromEntries(request.nextUrl.searchParams);
         const validatedParams = caseRecordsQuerySchema.parse({
-            id: params.id,
+            id,
             ...searchParams,
         });
 
