@@ -1,0 +1,177 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  VISITOR
+  EMPLOYEE
+  CONTRACTOR
+  ADMIN
+}
+
+enum ReviewStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum IngestionStatus {
+  RUNNING
+  COMPLETED
+  FAILED
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  clerkUserId String @unique
+  role      UserRole @default(VISITOR)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  reviews              Review[]
+  contractorPlacements ContractorPlacement[]
+  auditLogs            AuditLog[]
+
+  @@index([email])
+  @@index([clerkUserId])
+}
+
+model Company {
+  id           String   @id @default(cuid())
+  legalName    String
+  tradingNames String[] @default([])
+  aliases      String[] @default([])
+  cipcNumber   String?  @unique
+  industry     String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  caseRecords              CaseRecord[]
+  reviews                  Review[]
+  contractorPlacementsAsClient ContractorPlacement[] @relation("ClientCompany")
+
+  @@index([legalName])
+  @@index([cipcNumber])
+}
+
+model Vendor {
+  id         String   @id @default(cuid())
+  name       String
+  cipcNumber String?  @unique
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  contractorPlacements ContractorPlacement[]
+
+  @@index([name])
+}
+
+model ContractorPlacement {
+  id             String   @id @default(cuid())
+  userId         String
+  vendorId       String
+  clientCompanyId String
+  roleCategory   String?
+  startMonth     String?  // Format: YYYY-MM
+  endMonth       String?  // Format: YYYY-MM
+  endedEarly     Boolean  @default(false)
+  renewed        Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  user          User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  vendor        Vendor  @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  clientCompany Company @relation("ClientCompany", fields: [clientCompanyId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([vendorId])
+  @@index([clientCompanyId])
+}
+
+model CaseRecord {
+  id                 String   @id @default(cuid())
+  companyId          String
+  source             String   // e.g., "CCMA", "Labour Court", "High Court"
+  sourceUrl          String?
+  jurisdiction       String?  // e.g., "South Africa - Gauteng"
+  caseRef            String?  // e.g., "CASE123/2023"
+  year               Int?
+  partiesText        String?  @db.Text
+  topicTags          String[] @default([])
+  outcomeLabel       String?  // e.g., "Dismissed", "Upheld", "Settled"
+  outcomeConfidence  Float?   // 0.0 to 1.0
+  rawTextHash        String?  // Hash of raw text to detect duplicates
+  extractedJson      Json?    // Structured data extracted from case
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@unique([companyId, rawTextHash])
+  @@index([companyId])
+  @@index([source])
+  @@index([year])
+}
+
+model Review {
+  id           String       @id @default(cuid())
+  companyId    String
+  userId       String
+  roleType     String?      // e.g., "Employee", "Contractor"
+  ratingsJson  Json         // Flexible ratings structure
+  redactedText String?      @db.Text
+  status       ReviewStatus @default(PENDING)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([companyId])
+  @@index([userId])
+  @@index([status])
+}
+
+model AuditLog {
+  id           String   @id @default(cuid())
+  actorUserId  String?
+  action       String   // e.g., "CREATE", "UPDATE", "DELETE"
+  entityType   String   // e.g., "Company", "Review", "User"
+  entityId     String
+  beforeJson   Json?
+  afterJson    Json?
+  createdAt    DateTime @default(now())
+
+  actor User? @relation(fields: [actorUserId], references: [id], onDelete: SetNull)
+
+  @@index([actorUserId])
+  @@index([entityType, entityId])
+  @@index([createdAt])
+}
+
+model IngestionRun {
+  id              String           @id @default(cuid())
+  connectorName   String
+  status          IngestionStatus
+  startedAt       DateTime         @default(now())
+  finishedAt      DateTime?
+  addedCount      Int              @default(0)
+  skippedCount    Int              @default(0)
+  errorCount      Int              @default(0)
+  errorSampleJson Json?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  @@index([connectorName])
+  @@index([status])
+  @@index([startedAt])
+}
