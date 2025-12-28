@@ -83,17 +83,17 @@ Once you have PostgreSQL running (via Docker or external service):
 
 ### 1. Run Database Migrations
 ```bash
-npm run db:migrate
+pnpm db:migrate
 ```
 
 ### 2. Seed Sample Data
 ```bash
-npm run db:seed
+pnpm db:seed
 ```
 
 ### 3. Start Development Server
 ```bash
-npm run dev
+pnpm dev
 ```
 
 Visit: http://localhost:3000
@@ -101,7 +101,7 @@ Visit: http://localhost:3000
 ### 4. Start Background Worker (Optional)
 In a separate terminal:
 ```bash
-npm run worker
+pnpm worker
 ```
 
 ---

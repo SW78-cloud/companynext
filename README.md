@@ -14,7 +14,8 @@ A production-ready Next.js application providing transparent company insights fr
 
 ## 📋 Prerequisites
 
-- Node.js 18+ and npm
+- Node.js 18+ (recommended: Node 20 via nvm)
+- pnpm (package manager)
 - Docker and Docker Compose (for PostgreSQL)
 - Clerk account (for authentication) - [Get started](https://clerk.com)
 - Upstash account (for rate limiting) - [Get started](https://upstash.com)
@@ -25,7 +26,7 @@ A production-ready Next.js application providing transparent company insights fr
 
 ```bash
 cd CompanyNext-Cursor-Platform
-npm install
+ppnpm install
 ```
 
 ### 2. Environment Variables
@@ -84,13 +85,13 @@ npx prisma migrate dev
 Seed the database with sample data:
 
 ```bash
-npm run db:seed
+pnpm db:seed
 ```
 
 ### 5. Start Development Server
 
 ```bash
-npm run dev
+pnpm dev
 ```
 
 The application will be available at [http://localhost:3000](http://localhost:3000)
@@ -100,7 +101,7 @@ The application will be available at [http://localhost:3000](http://localhost:30
 In a separate terminal:
 
 ```bash
-npm run worker
+pnpm worker
 ```
 
 The worker will process background jobs and run the demo `hello_job` every 5 minutes.
@@ -192,19 +193,19 @@ All public endpoints are rate-limited to prevent abuse.
 ### Run Unit Tests
 
 ```bash
-npm run test:unit
+pnpm test:unit
 ```
 
 ### Run E2E Tests
 
 ```bash
-npm run test:e2e
+pnpm test:e2e
 ```
 
 ### Run E2E Tests with UI
 
 ```bash
-npm run test:e2e:ui
+pnpm test:e2e:ui
 ```
 
 ## 🗄️ Database Commands
@@ -212,7 +213,7 @@ npm run test:e2e:ui
 ### View Database in Prisma Studio
 
 ```bash
-npm run db:studio
+pnpm db:studio
 ```
 
 ### Create a New Migration
@@ -281,7 +282,7 @@ Ensure all production environment variables are set:
 Deploy the worker as a separate service or long-running process:
 
 ```bash
-npm run worker
+pnpm worker
 ```
 
 Consider using a process manager like PM2 or deploying to a platform that supports background workers.
@@ -291,8 +292,8 @@ Consider using a process manager like PM2 or deploying to a platform that suppor
 Deploy to Vercel, Netlify, or any platform supporting Next.js:
 
 ```bash
-npm run build
-npm run start
+pnpm build
+pnpm start
 ```
 
 ## 🤝 Contributing
