@@ -19,8 +19,9 @@ enum UserRole {
 
 enum ReviewStatus {
   PENDING
-  APPROVED
+  PUBLISHED
   REJECTED
+  REMOVED
 }
 
 enum IngestionStatus {
@@ -37,6 +38,8 @@ model User {
   role         UserRole @default(VISITOR)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+  lastLoginAt  DateTime?
+  flags        Json?    // e.g. { banned: boolean, reviewSuspended: boolean }
 
   reviews              Review[]
   contractorPlacements ContractorPlacement[]
@@ -58,12 +61,18 @@ model Company {
   aliases      String[] @default([])
   cipcNumber   String?  @unique
   industry     String?
+  hqCity       String?
+  hqCountry    String?  @default("South Africa")
+  externalSources Json? // e.g. { glassdoorEmployerId: number }
+
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
   caseRecords              CaseRecord[]
   reviews                  Review[]
   contractorPlacementsAsClient ContractorPlacement[] @relation("ClientCompany")
+  glassdoorCache           GlassdoorCache?
+  reviewAggregate          CompanyReviewAggregate?
 
   @@index([legalName])
   @@index([cipcNumber])
@@ -132,10 +141,31 @@ model Review {
   id           String       @id @default(cuid())
   companyId    String
   userId       String
-  roleType     String?      // e.g., "Employee", "Contractor"
-  ratingsJson  Json         // Flexible ratings structure
-  redactedText String?      @db.Text
+  roleType     String?      // e.g., "Employee", "Contractor" - Kept for compatibility
+  employmentType String    // "PERM" | "CONTRACTOR" - Added for new spec
+  isAnonymous  Boolean      @default(true)
+  authorRoleSnapshot String? // captured at submission
+  title        String?
+  body         String?      @db.Text
+  ratingsJson  Json         // { overall: 1..5, payFairness: 1..5, ... }
+  redactedText String?      @db.Text // Kept for moderation display
+  
+  // Location
+  city         String?
+  province     String?
+  country      String       @default("South Africa")
+  
+  // Coarse dates
+  dates        Json?        // { startMonth: string, endMonth: string }
+  
   status       ReviewStatus @default(PENDING)
+  
+  // Internal moderation
+  moderation   Json?        // { reason: string, moderatedBy: string, moderatedAt: string }
+  
+  // Anti-abuse
+  abuseSignals Json?        // { ipHash: string, deviceHash: string, velocityScore: number }
+  
   createdAt    DateTime     @default(now())
   updatedAt    DateTime     @updatedAt
 
@@ -145,6 +175,41 @@ model Review {
   @@index([companyId])
   @@index([userId])
   @@index([status])
+  @@index([createdAt])
+}
+
+model GlassdoorCache {
+  id        String   @id @default(cuid())
+  companyId String   @unique
+  data      Json
+  expiresAt DateTime
+  updatedAt DateTime @updatedAt
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([expiresAt])
+}
+
+model CompanyReviewAggregate {
+  companyId    String   @id
+  updatedAt    DateTime @updatedAt
+  
+  // Counts
+  totalPublished Int      @default(0)
+  last30Days     Int      @default(0)
+  
+  // Averages (overall + labour metrics)
+  avgOverall        Float  @default(0)
+  avgPayFairness    Float  @default(0)
+  avgContractFairness Float @default(0)
+  avgTerminationRisk  Float @default(0)
+  avgPaymentDiscipline Float @default(0)
+  avgManagementIntegrity Float @default(0)
+  
+  // Distributions (stored as JSON histograms: { "1": 10, "2": 5, ... })
+  overallDistribution Json?
+  
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
 }
 
 model AuditLog {

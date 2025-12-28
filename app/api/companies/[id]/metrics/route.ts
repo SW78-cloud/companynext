@@ -1,13 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/db';
 import { companyIdSchema } from '@/lib/validators';
-import { formatErrorResponse, NotFoundError, ValidationError } from '@/lib/errors';
+import { formatErrorResponse, NotFoundError, UnauthorizedError, ValidationError } from '@/lib/errors';
+import { getCurrentUser } from '@/lib/auth';
 
 export async function GET(
     request: NextRequest,
     { params }: { params: Promise<{ id: string }> }
 ) {
     try {
+        // Enforce authentication
+        const user = await getCurrentUser();
+        if (!user) {
+            throw new UnauthorizedError();
+        }
+
         const { id } = await params;
 
         // Validate company ID
@@ -24,7 +31,7 @@ export async function GET(
                 _count: {
                     select: {
                         caseRecords: true,
-                        reviews: { where: { status: 'APPROVED' } },
+                        reviews: { where: { status: 'PUBLISHED' } },
                     },
                 },
             },

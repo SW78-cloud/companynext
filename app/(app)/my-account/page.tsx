@@ -74,9 +74,9 @@ export default async function MyAccountPage() {
                                 </span>
                             </div>
                             <div className="flex justify-between text-sm">
-                                <span className="text-muted-foreground">Approved Reviews</span>
+                                <span className="text-muted-foreground">Published Reviews</span>
                                 <span className="font-semibold">
-                                    {reviews.filter((r) => r.status === 'APPROVED').length}
+                                    {reviews.filter((r) => r.status === 'PUBLISHED').length}
                                 </span>
                             </div>
                         </CardContent>
@@ -105,7 +105,7 @@ export default async function MyAccountPage() {
                                             </div>
                                             <Badge
                                                 variant={
-                                                    review.status === 'APPROVED'
+                                                    review.status === 'PUBLISHED'
                                                         ? 'default'
                                                         : review.status === 'PENDING'
                                                             ? 'secondary'

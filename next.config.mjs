@@ -6,7 +6,12 @@ const nextConfig = {
         },
     },
     images: {
-        remotePatterns: [],
+        remotePatterns: [
+            {
+                protocol: 'https',
+                hostname: 'www.glassdoor.com',
+            },
+        ],
     },
 };
 

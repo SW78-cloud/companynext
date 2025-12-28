@@ -3,6 +3,8 @@ import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Building2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { redirect } from 'next/navigation';
+import { getCurrentUser } from '@/lib/auth';
 
 async function SearchResults({ query }: { query: string }) {
     if (!query) {
@@ -80,6 +82,13 @@ export default async function SearchPage({
 }: {
     searchParams: Promise<{ q?: string }>;
 }) {
+    const user = await getCurrentUser();
+    if (!user) {
+        const { q } = await searchParams;
+        const queryParams = q ? `?q=${encodeURIComponent(q)}` : '';
+        redirect(`/login?returnUrl=/search${queryParams}`);
+    }
+
     const { q } = await searchParams;
     const query = q || '';
 

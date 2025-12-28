@@ -10,8 +10,24 @@ export const searchQuerySchema = z.object({
 // Review submission validation
 export const reviewSchema = z.object({
     companyId: z.string().cuid(),
-    roleType: z.string().min(1).max(100).optional(),
+    employmentType: z.enum(['PERM', 'CONTRACTOR']),
+    isAnonymous: z.boolean().default(true),
+    title: z.string().min(2).max(100).optional(),
+    body: z.string().min(10).max(5000).optional(),
     ratingsJson: z.record(z.union([z.number(), z.string(), z.boolean()])),
+
+    // Location (optional)
+    city: z.string().max(100).optional(),
+    province: z.string().max(100).optional(),
+
+    // Dates (optional)
+    dates: z.object({
+        startMonth: z.string().regex(/^\d{4}-\d{2}$/).optional(),
+        endMonth: z.string().regex(/^\d{4}-\d{2}$/).optional(),
+    }).optional(),
+
+    // Legacy mapping (optional)
+    roleType: z.string().min(1).max(100).optional(),
     redactedText: z.string().max(5000).optional(),
 });
 

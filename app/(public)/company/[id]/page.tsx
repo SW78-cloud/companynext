@@ -1,38 +1,72 @@
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
+import Link from 'next/link';
 import { MetricCard } from '@/components/metric-card';
 import { ChartPlaceholder } from '@/components/chart-placeholder';
 import { DataTable } from '@/components/data-table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Building2, MapPin, Calendar } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Building2, MapPin, Calendar, Star } from 'lucide-react';
 import prisma from '@/lib/db';
+import { getCurrentUser } from '@/lib/auth';
+import { GlassdoorAttribution } from '@/components/glassdoor-attribution';
 
-async function getCompany(id: string) {
-    const company = await prisma.company.findUnique({
+interface CompanyData {
+    id: string;
+    legalName: string;
+    cipcNumber: string | null;
+    industry: string | null;
+    createdAt: Date;
+    glassdoorCache: any;
+    reviewAggregate: any;
+    caseRecords: any[];
+    reviews: any[];
+    _count: {
+        caseRecords: number;
+        reviews: number;
+    };
+}
+
+async function getCompany(id: string): Promise<CompanyData | null> {
+    const company = await (prisma.company.findUnique({
         where: { id },
         include: {
+            glassdoorCache: true,
+            reviewAggregate: true,
             caseRecords: {
                 orderBy: { createdAt: 'desc' },
                 take: 10,
             },
             reviews: {
-                where: { status: 'APPROVED' },
+                where: { status: 'PUBLISHED' as any },
+                include: {
+                    user: {
+                        select: { name: true } as any,
+                    },
+                },
                 orderBy: { createdAt: 'desc' },
                 take: 5,
             },
             _count: {
                 select: {
                     caseRecords: true,
-                    reviews: true,
+                    reviews: { where: { status: 'PUBLISHED' as any } },
                 },
             },
-        },
-    });
+        } as any,
+    }) as any);
 
-    return company;
+    return company as CompanyData | null;
 }
 
 export default async function CompanyPage({ params }: { params: Promise<{ id: string }> }) {
+    const user = await getCurrentUser();
+    if (!user) {
+        const { id } = await params;
+        redirect(`/login?returnUrl=/company/${id}`);
+    }
+
     const { id } = await params;
     const company = await getCompany(id);
 
@@ -85,6 +119,11 @@ export default async function CompanyPage({ params }: { params: Promise<{ id: st
                                 </div>
                             </div>
                         </div>
+                        {user && ['EMPLOYEE', 'CONTRACTOR', 'ADMIN'].includes(user.role) && (
+                            <Link href={`/company/${company.id}/review`}>
+                                <Button>Submit Review</Button>
+                            </Link>
+                        )}
                     </div>
                 </div>
 
@@ -98,7 +137,7 @@ export default async function CompanyPage({ params }: { params: Promise<{ id: st
                     <MetricCard
                         title="User Reviews"
                         value={company._count.reviews}
-                        description="Approved reviews"
+                        description="Published reviews"
                     />
                     <MetricCard
                         title="Data Sources"
@@ -111,6 +150,7 @@ export default async function CompanyPage({ params }: { params: Promise<{ id: st
                 <Tabs defaultValue="overview" className="space-y-4">
                     <TabsList>
                         <TabsTrigger value="overview">Overview</TabsTrigger>
+                        <TabsTrigger value="ratings">Ratings</TabsTrigger>
                         <TabsTrigger value="cases">Legal Cases</TabsTrigger>
                         <TabsTrigger value="reviews">Reviews</TabsTrigger>
                     </TabsList>
@@ -125,6 +165,78 @@ export default async function CompanyPage({ params }: { params: Promise<{ id: st
                             description="Breakdown of case outcomes"
                             height={250}
                         />
+                    </TabsContent>
+
+                    <TabsContent value="ratings" className="space-y-4">
+                        <div className="grid md:grid-cols-2 gap-4">
+                            {/* Internal Ratings */}
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle>Internal Labour Ratings</CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    {!(company as any).reviewAggregate || (company as any).reviewAggregate.totalPublished === 0 ? (
+                                        <p className="text-muted-foreground text-sm py-4">No internal ratings yet.</p>
+                                    ) : (
+                                        <div className="space-y-4">
+                                            {[
+                                                { label: 'Overall', value: (company as any).reviewAggregate.avgOverall },
+                                                { label: 'Pay Fairness', value: (company as any).reviewAggregate.avgPayFairness },
+                                                { label: 'Contract Fairness', value: (company as any).reviewAggregate.avgContractFairness },
+                                                { label: 'Termination Risk', value: (company as any).reviewAggregate.avgTerminationRisk },
+                                                { label: 'Payment Discipline', value: (company as any).reviewAggregate.avgPaymentDiscipline },
+                                                { label: 'Management Integrity', value: (company as any).reviewAggregate.avgManagementIntegrity },
+                                            ].map((rating) => (
+                                                <div key={rating.label} className="flex justify-between items-center">
+                                                    <span className="text-sm">{rating.label}</span>
+                                                    <div className="flex items-center gap-2">
+                                                        <div className="h-2 w-32 bg-secondary rounded-full overflow-hidden">
+                                                            <div
+                                                                className="h-full bg-primary"
+                                                                style={{ width: `${(rating.value / 5) * 100}%` }}
+                                                            />
+                                                        </div>
+                                                        <span className="text-sm font-bold">{rating.value.toFixed(1)}</span>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </CardContent>
+                            </Card>
+
+                            {/* Glassdoor Ratings */}
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle className="flex justify-between items-center">
+                                        Glassdoor Summary
+                                        <GlassdoorAttribution />
+                                    </CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    {!(company as any).glassdoorCache ? (
+                                        <p className="text-muted-foreground text-sm py-4">No Glassdoor data available.</p>
+                                    ) : (
+                                        <div className="space-y-4">
+                                            <div className="flex items-center gap-2 mb-4">
+                                                <Star className="h-6 w-6 text-yellow-500 fill-yellow-500" />
+                                                <span className="text-2xl font-bold">
+                                                    {((company as any).glassdoorCache.data as any).overallRating || 'N/A'}
+                                                </span>
+                                                <span className="text-muted-foreground text-sm">
+                                                    {((company as any).glassdoorCache.data as any).numberOfRatings || 0} reviews)
+                                                </span>
+                                            </div>
+                                            {((company as any).glassdoorCache.data as any).featuredReview && (
+                                                <div className="bg-muted p-3 rounded-lg text-sm italic">
+                                                    &ldquo;{((company as any).glassdoorCache.data as any).featuredReview.pros?.substring(0, 150)}...&rdquo;
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+                                </CardContent>
+                            </Card>
+                        </div>
                     </TabsContent>
 
                     <TabsContent value="cases">
@@ -156,12 +268,22 @@ export default async function CompanyPage({ params }: { params: Promise<{ id: st
                                     <div className="space-y-4">
                                         {company.reviews.map((review) => (
                                             <div key={review.id} className="border-b pb-4 last:border-0">
-                                                <p className="text-sm text-muted-foreground mb-2">
-                                                    {review.roleType || 'Anonymous'} •{' '}
-                                                    {new Date(review.createdAt).toLocaleDateString()}
-                                                </p>
-                                                {review.redactedText && (
-                                                    <p className="text-sm">{review.redactedText}</p>
+                                                <div className="flex items-center gap-2 mb-2">
+                                                    <span className="text-sm font-medium">
+                                                        {review.isAnonymous ? 'Anonymous' : (review.user.name || 'Anonymous User')}
+                                                    </span>
+                                                    <Badge variant="outline" className="text-[10px] py-0">
+                                                        Verified {review.employmentType === 'PERM' ? 'Permanent Employee' : 'Contractor'}
+                                                    </Badge>
+                                                    <span className="text-xs text-muted-foreground">
+                                                        • {new Date(review.createdAt).toLocaleDateString()}
+                                                    </span>
+                                                </div>
+                                                {review.title && (
+                                                    <h4 className="font-semibold text-sm mb-1">{review.title}</h4>
+                                                )}
+                                                {review.body && (
+                                                    <p className="text-sm text-muted-foreground">{review.body}</p>
                                                 )}
                                             </div>
                                         ))}

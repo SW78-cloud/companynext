@@ -1,11 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/db';
 import { searchQuerySchema } from '@/lib/validators';
-import { formatErrorResponse, ValidationError } from '@/lib/errors';
+import { formatErrorResponse, UnauthorizedError, ValidationError } from '@/lib/errors';
 import { checkRateLimit, searchRateLimit } from '@/lib/rate-limit';
+import { getCurrentUser } from '@/lib/auth';
 
 export async function GET(request: NextRequest) {
     try {
+        // Enforce authentication
+        const user = await getCurrentUser();
+        if (!user) {
+            throw new UnauthorizedError();
+        }
+
         // Rate limiting
         const ip = request.headers.get('x-forwarded-for') || 'anonymous';
         const rateLimitResult = await checkRateLimit(ip, searchRateLimit);
