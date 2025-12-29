@@ -11,7 +11,9 @@ export default async function AppLayout({
     const user = await getCurrentUser();
 
     if (!user) {
-        redirect('/login');
+        // If session exists (passed middleware) but user not found in DB, 
+        // redirect to logout to clear the stale session and prevent redirect loop.
+        redirect('/api/auth/logout');
     }
 
     return (
