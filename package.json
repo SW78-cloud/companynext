@@ -41,7 +41,6 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.49.1",
-    "@types/bcryptjs": "^3.0.0",
     "@types/node": "^22.10.5",
     "@types/react": "^19.0.6",
     "@types/react-dom": "^19.0.2",

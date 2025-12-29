@@ -71,7 +71,7 @@ function LoginForm() {
                                 type="email"
                                 placeholder="name@example.com"
                                 value={email}
-                                onChange={(e) => setEmail(e.target.value)}
+                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
                                 required
                             />
                         </div>
@@ -83,7 +83,7 @@ function LoginForm() {
                                 id="password"
                                 type="password"
                                 value={password}
-                                onChange={(e) => setPassword(e.target.value)}
+                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
                                 required
                             />
                         </div>
