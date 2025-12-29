@@ -23,18 +23,32 @@ const individualSchema = z.object({
     currentCompany: z.string().optional(),
     contractHouse: z.string().optional(),
     placedAtClient: z.string().optional(),
-}).refine((data) => {
+}).superRefine((data, ctx) => {
     if (data.workerType === 'PERMANENT') {
-        return !!data.currentCompany && data.currentCompany.length > 0;
+        if (!data.currentCompany || data.currentCompany.length < 2) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: "Current company is required",
+                path: ["currentCompany"],
+            });
+        }
     }
     if (data.workerType === 'CONTRACTOR') {
-        return !!data.contractHouse && data.contractHouse.length > 0 &&
-            !!data.placedAtClient && data.placedAtClient.length > 0;
+        if (!data.contractHouse || data.contractHouse.length < 2) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: "Contract house / Agency is required",
+                path: ["contractHouse"],
+            });
+        }
+        if (!data.placedAtClient || data.placedAtClient.length < 2) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: "Placed at client is required",
+                path: ["placedAtClient"],
+            });
+        }
     }
-    return true;
-}, {
-    message: "Please fill in all required fields for your worker type",
-    path: ["workerType"],
 });
 
 type IndividualFormValues = z.infer<typeof individualSchema>;
@@ -134,32 +148,38 @@ export function IndividualOnboardingForm({ onBack, onSuccess }: IndividualOnboar
 
                     {workerType === 'PERMANENT' && (
                         <div className="space-y-2 animate-in fade-in slide-in-from-top-2">
-                            <Label htmlFor="currentCompany">Current Company</Label>
+                            <Label htmlFor="currentCompany">Current Company <span className="text-destructive">*</span></Label>
                             <Input
                                 id="currentCompany"
                                 placeholder="Enter company name"
                                 {...register('currentCompany')}
+                                className={errors.currentCompany ? "border-destructive" : ""}
                             />
+                            {errors.currentCompany && <p className="text-xs text-destructive">{errors.currentCompany.message}</p>}
                         </div>
                     )}
 
                     {workerType === 'CONTRACTOR' && (
                         <div className="grid grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-2">
                             <div className="space-y-2">
-                                <Label htmlFor="contractHouse">Contract House / Agency</Label>
+                                <Label htmlFor="contractHouse">Contract House / Agency <span className="text-destructive">*</span></Label>
                                 <Input
                                     id="contractHouse"
                                     placeholder="e.g. Entelect, OfferZen"
                                     {...register('contractHouse')}
+                                    className={errors.contractHouse ? "border-destructive" : ""}
                                 />
+                                {errors.contractHouse && <p className="text-xs text-destructive">{errors.contractHouse.message}</p>}
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="placedAtClient">Placed At Client</Label>
+                                <Label htmlFor="placedAtClient">Placed At Client <span className="text-destructive">*</span></Label>
                                 <Input
                                     id="placedAtClient"
                                     placeholder="e.g. Standard Bank, Discovery"
                                     {...register('placedAtClient')}
+                                    className={errors.placedAtClient ? "border-destructive" : ""}
                                 />
+                                {errors.placedAtClient && <p className="text-xs text-destructive">{errors.placedAtClient.message}</p>}
                             </div>
                         </div>
                     )}

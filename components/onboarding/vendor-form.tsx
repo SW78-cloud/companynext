@@ -24,14 +24,16 @@ const vendorSchema = z.object({
     })).min(1, "At least one client is required"),
     clientsEarlyTerminationHabit: z.boolean(),
     earlyTerminationClients: z.array(z.string()).optional(),
-}).refine((data) => {
+}).superRefine((data, ctx) => {
     if (data.clientsEarlyTerminationHabit) {
-        return !!data.earlyTerminationClients && data.earlyTerminationClients.length > 0;
+        if (!data.earlyTerminationClients || data.earlyTerminationClients.length === 0) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: "Please select at least one client known for early termination",
+                path: ["earlyTerminationClients"],
+            });
+        }
     }
-    return true;
-}, {
-    message: "At least one early termination client must be specified",
-    path: ["earlyTerminationClients"],
 });
 
 type VendorFormValues = z.infer<typeof vendorSchema>;

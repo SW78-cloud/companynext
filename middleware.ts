@@ -52,9 +52,18 @@ export async function middleware(request: NextRequest) {
         return NextResponse.redirect(loginUrl);
     }
 
-    // 2. If authenticated and emailVerified=false -> redirect to /verify-email (except if already on /verify-email, /logout, or public routes)
+    // 2. If authenticated and emailVerified=false -> redirect to /verify-email 
+    // BUT allow /logout and public routes (except /onboarding which requires verification for step 2)
     if (!session?.emailVerified) {
-        if (path === '/verify-email' || path === '/logout' || isPublicRoute) {
+        if (path === '/verify-email' || path === '/logout') {
+            return NextResponse.next();
+        }
+        // Explicitly block /onboarding for unverified users so they are forced to verify first
+        if (path.startsWith('/onboarding')) {
+            return NextResponse.redirect(new URL('/verify-email', request.url));
+        }
+        // Allow other public routes (like landing page, privacy policy)
+        if (isPublicRoute) {
             return NextResponse.next();
         }
         return NextResponse.redirect(new URL('/verify-email', request.url));

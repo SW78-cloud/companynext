@@ -21,7 +21,7 @@ const companySchema = z.object({
     vendorList: z.array(z.object({
         vendorName: z.string().min(2, "Vendor name must be at least 2 characters"),
         staffCount: z.coerce.number().int().positive("Staff count must be a positive integer"),
-    })).min(1, "At least one vendor is required"),
+    })).min(1, "At least one external vendor is required. If none, please verify if this form is correct for your business model."),
 });
 
 
