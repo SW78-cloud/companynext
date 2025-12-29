@@ -76,3 +76,29 @@ export async function auditDelete<T extends Record<string, any>>(
         beforeJson: data,
     });
 }
+export async function logAudit(
+    action: string,
+    entityType: string,
+    entityId: string,
+    beforeJson?: Record<string, any>,
+    afterJson?: Record<string, any>
+) {
+    // Try to get current user from session if we are in a request context
+    let actorUserId: string | undefined;
+    try {
+        const { getSessionUser } = await import('./auth');
+        const user = await getSessionUser();
+        actorUserId = user?.id;
+    } catch (e) {
+        // Fallback or ignore if not in request context
+    }
+
+    await createAuditLog({
+        actorUserId,
+        action: action as any,
+        entityType,
+        entityId,
+        beforeJson,
+        afterJson,
+    });
+}

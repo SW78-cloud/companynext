@@ -6,6 +6,9 @@ const key = new TextEncoder().encode(secretKey);
 
 export interface SessionPayload {
     userId: string;
+    emailVerified: boolean;
+    onboardingStatus: string;
+    accountType?: string | null;
     expires?: Date;
     [key: string]: any;
 }

@@ -3,6 +3,7 @@ import { z } from 'zod';
 import prisma from '@/lib/db';
 import { hashPassword } from '@/lib/password';
 import { createSession } from '@/lib/auth-session';
+import { logAudit } from '@/lib/audit';
 
 const registerSchema = z.object({
     email: z.string().email(),
@@ -43,7 +44,16 @@ export async function POST(request: Request) {
             }
         });
 
-        await createSession(user.id);
+        await createSession(
+            user.id,
+            false, // emailVerified initial
+            'NOT_STARTED', // onboardingStatus initial
+            null // accountType initial
+        );
+
+        // Audit Logging
+        await logAudit('USER_REGISTERED', 'User', user.id, undefined, { email: user.email, name: user.name });
+        await logAudit('EMAIL_VERIFICATION_SENT', 'User', user.id, undefined, { email: user.email });
 
         return NextResponse.json({ success: true, user });
     } catch (error) {

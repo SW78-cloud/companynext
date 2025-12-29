@@ -17,6 +17,7 @@ function LoginForm() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
+    const [info, setInfo] = useState('');
     const [isLoading, setIsLoading] = useState(false);
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -35,6 +36,14 @@ function LoginForm() {
 
             if (!res.ok) {
                 throw new Error(data.error || 'Login failed');
+            }
+
+            if (data.user && !data.user.emailVerified) {
+                setInfo('Verify your email to continue.');
+                setTimeout(() => {
+                    router.push('/verify-email');
+                }, 2000);
+                return;
             }
 
             // Redirect
@@ -62,6 +71,12 @@ function LoginForm() {
                             <div className="p-3 bg-red-50 text-red-600 text-sm rounded-md flex items-center gap-2">
                                 <AlertCircle className="w-4 h-4" />
                                 {error}
+                            </div>
+                        )}
+                        {info && (
+                            <div className="p-3 bg-blue-50 text-blue-600 text-sm rounded-md flex items-center gap-2">
+                                <AlertCircle className="w-4 h-4" />
+                                {info}
                             </div>
                         )}
                         <div className="space-y-2">

@@ -1,3 +1,4 @@
+// Trigger IDE re-scan after prisma generate
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import prisma from '@/lib/db';
@@ -20,7 +21,19 @@ export async function POST(request: Request) {
 
         const { email, password } = result.data;
 
-        const user = await prisma.user.findUnique({ where: { email } });
+        const user = await prisma.user.findUnique({
+            where: { email },
+            select: {
+                id: true,
+                email: true,
+                name: true,
+                passwordHash: true,
+                role: true,
+                emailVerified: true,
+                onboardingStatus: true,
+                accountType: true,
+            }
+        });
 
         if (!user) {
             // Use generic error message for security
@@ -33,7 +46,12 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
         }
 
-        await createSession(user.id);
+        await createSession(
+            user.id,
+            user.emailVerified,
+            user.onboardingStatus,
+            user.accountType
+        );
 
         return NextResponse.json({
             success: true,
@@ -41,7 +59,9 @@ export async function POST(request: Request) {
                 id: user.id,
                 email: user.email,
                 name: user.name,
-                role: user.role
+                role: user.role,
+                emailVerified: user.emailVerified,
+                onboardingStatus: user.onboardingStatus,
             }
         });
     } catch (error) {

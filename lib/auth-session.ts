@@ -1,9 +1,9 @@
 import { cookies } from 'next/headers';
 import { encrypt, decrypt } from './session';
 
-export async function createSession(userId: string) {
+export async function createSession(userId: string, emailVerified: boolean, onboardingStatus: string, accountType?: string | null) {
     const expires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 1 day
-    const sessionToken = await encrypt({ userId, expires });
+    const sessionToken = await encrypt({ userId, emailVerified, onboardingStatus, accountType, expires });
 
     (await cookies()).set('session', sessionToken, {
         httpOnly: true,

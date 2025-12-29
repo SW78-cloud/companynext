@@ -39,3 +39,15 @@ export async function requireAuth() {
     return user;
 }
 
+export async function getSessionUser() {
+    const session = await getSession();
+    if (!session || !session.userId) return null;
+
+    return {
+        id: session.userId,
+        emailVerified: session.emailVerified as boolean,
+        onboardingStatus: session.onboardingStatus as string,
+        accountType: session.accountType as string | null,
+    };
+}
+
