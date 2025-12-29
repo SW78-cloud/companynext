@@ -30,49 +30,80 @@ enum IngestionStatus {
   FAILED
 }
 
+enum AccountType {
+  INDIVIDUAL
+  VENDOR
+  PRIVATE_COMPANY
+  PUBLIC_COMPANY
+}
+
+enum OnboardingStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETE
+}
+
+enum WorkerType {
+  PERMANENT
+  CONTRACTOR
+}
+
+enum CompanySector {
+  PRIVATE
+  PUBLIC
+}
+
 model User {
-  id           String   @id @default(cuid())
-  email        String   @unique
-  passwordHash String
-  name         String?
-  role         UserRole @default(VISITOR)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  lastLoginAt  DateTime?
-  flags        Json?    // e.g. { banned: boolean, reviewSuspended: boolean }
+  id               String           @id @default(cuid())
+  email            String           @unique
+  passwordHash     String
+  name             String?
+  role             UserRole         @default(VISITOR)
+  accountType      AccountType?
+  onboardingStatus OnboardingStatus @default(NOT_STARTED)
+  emailVerified    Boolean          @default(false)
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  lastLoginAt      DateTime?
+  flags            Json? // e.g. { banned: boolean, reviewSuspended: boolean }
 
   reviews              Review[]
   contractorPlacements ContractorPlacement[]
   auditLogs            AuditLog[]
+  individualProfile    IndividualProfile?
+  vendorProfile        VendorProfile?
+  companyProfile       CompanyProfile?
 
   @@index([email])
+  @@index([accountType])
+  @@index([onboardingStatus])
 }
 
 model RateLimit {
-  key       String   @id
-  count     Int      @default(0)
-  resetAt   DateTime
+  key     String   @id
+  count   Int      @default(0)
+  resetAt DateTime
 }
 
 model Company {
-  id           String   @id @default(cuid())
-  legalName    String
-  tradingNames String[] @default([])
-  aliases      String[] @default([])
-  cipcNumber   String?  @unique
-  industry     String?
-  hqCity       String?
-  hqCountry    String?  @default("South Africa")
+  id              String   @id @default(cuid())
+  legalName       String
+  tradingNames    String[] @default([])
+  aliases         String[] @default([])
+  cipcNumber      String?  @unique
+  industry        String?
+  hqCity          String?
+  hqCountry       String?  @default("South Africa")
   externalSources Json? // e.g. { glassdoorEmployerId: number }
 
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  caseRecords              CaseRecord[]
-  reviews                  Review[]
-  contractorPlacementsAsClient ContractorPlacement[] @relation("ClientCompany")
-  glassdoorCache           GlassdoorCache?
-  reviewAggregate          CompanyReviewAggregate?
+  caseRecords                  CaseRecord[]
+  reviews                      Review[]
+  contractorPlacementsAsClient ContractorPlacement[]   @relation("ClientCompany")
+  glassdoorCache               GlassdoorCache?
+  reviewAggregate              CompanyReviewAggregate?
 
   @@index([legalName])
   @@index([cipcNumber])
@@ -91,17 +122,17 @@ model Vendor {
 }
 
 model ContractorPlacement {
-  id             String   @id @default(cuid())
-  userId         String
-  vendorId       String
+  id              String   @id @default(cuid())
+  userId          String
+  vendorId        String
   clientCompanyId String
-  roleCategory   String?
-  startMonth     String?  // Format: YYYY-MM
-  endMonth       String?  // Format: YYYY-MM
-  endedEarly     Boolean  @default(false)
-  renewed        Boolean  @default(false)
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  roleCategory    String?
+  startMonth      String? // Format: YYYY-MM
+  endMonth        String? // Format: YYYY-MM
+  endedEarly      Boolean  @default(false)
+  renewed         Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
   user          User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   vendor        Vendor  @relation(fields: [vendorId], references: [id], onDelete: Cascade)
@@ -113,21 +144,21 @@ model ContractorPlacement {
 }
 
 model CaseRecord {
-  id                 String   @id @default(cuid())
-  companyId          String
-  source             String   // e.g., "CCMA", "Labour Court", "High Court"
-  sourceUrl          String?
-  jurisdiction       String?  // e.g., "South Africa - Gauteng"
-  caseRef            String?  // e.g., "CASE123/2023"
-  year               Int?
-  partiesText        String?  @db.Text
-  topicTags          String[] @default([])
-  outcomeLabel       String?  // e.g., "Dismissed", "Upheld", "Settled"
-  outcomeConfidence  Float?   // 0.0 to 1.0
-  rawTextHash        String?  // Hash of raw text to detect duplicates
-  extractedJson      Json?    // Structured data extracted from case
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
+  id                String   @id @default(cuid())
+  companyId         String
+  source            String // e.g., "CCMA", "Labour Court", "High Court"
+  sourceUrl         String?
+  jurisdiction      String? // e.g., "South Africa - Gauteng"
+  caseRef           String? // e.g., "CASE123/2023"
+  year              Int?
+  partiesText       String?  @db.Text
+  topicTags         String[] @default([])
+  outcomeLabel      String? // e.g., "Dismissed", "Upheld", "Settled"
+  outcomeConfidence Float? // 0.0 to 1.0
+  rawTextHash       String? // Hash of raw text to detect duplicates
+  extractedJson     Json? // Structured data extracted from case
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 
   company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
 
@@ -138,36 +169,36 @@ model CaseRecord {
 }
 
 model Review {
-  id           String       @id @default(cuid())
-  companyId    String
-  userId       String
-  roleType     String?      // e.g., "Employee", "Contractor" - Kept for compatibility
-  employmentType String    // "PERM" | "CONTRACTOR" - Added for new spec
-  isAnonymous  Boolean      @default(true)
+  id                 String  @id @default(cuid())
+  companyId          String
+  userId             String
+  roleType           String? // e.g., "Employee", "Contractor" - Kept for compatibility
+  employmentType     String // "PERM" | "CONTRACTOR" - Added for new spec
+  isAnonymous        Boolean @default(true)
   authorRoleSnapshot String? // captured at submission
-  title        String?
-  body         String?      @db.Text
-  ratingsJson  Json         // { overall: 1..5, payFairness: 1..5, ... }
-  redactedText String?      @db.Text // Kept for moderation display
-  
+  title              String?
+  body               String? @db.Text
+  ratingsJson        Json // { overall: 1..5, payFairness: 1..5, ... }
+  redactedText       String? @db.Text // Kept for moderation display
+
   // Location
-  city         String?
-  province     String?
-  country      String       @default("South Africa")
-  
+  city     String?
+  province String?
+  country  String  @default("South Africa")
+
   // Coarse dates
-  dates        Json?        // { startMonth: string, endMonth: string }
-  
-  status       ReviewStatus @default(PENDING)
-  
+  dates Json? // { startMonth: string, endMonth: string }
+
+  status ReviewStatus @default(PENDING)
+
   // Internal moderation
-  moderation   Json?        // { reason: string, moderatedBy: string, moderatedAt: string }
-  
+  moderation Json? // { reason: string, moderatedBy: string, moderatedAt: string }
+
   // Anti-abuse
-  abuseSignals Json?        // { ipHash: string, deviceHash: string, velocityScore: number }
-  
-  createdAt    DateTime     @default(now())
-  updatedAt    DateTime     @updatedAt
+  abuseSignals Json? // { ipHash: string, deviceHash: string, velocityScore: number }
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
   user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -191,36 +222,36 @@ model GlassdoorCache {
 }
 
 model CompanyReviewAggregate {
-  companyId    String   @id
-  updatedAt    DateTime @updatedAt
-  
+  companyId String   @id
+  updatedAt DateTime @updatedAt
+
   // Counts
-  totalPublished Int      @default(0)
-  last30Days     Int      @default(0)
-  
+  totalPublished Int @default(0)
+  last30Days     Int @default(0)
+
   // Averages (overall + labour metrics)
-  avgOverall        Float  @default(0)
-  avgPayFairness    Float  @default(0)
-  avgContractFairness Float @default(0)
-  avgTerminationRisk  Float @default(0)
-  avgPaymentDiscipline Float @default(0)
+  avgOverall             Float @default(0)
+  avgPayFairness         Float @default(0)
+  avgContractFairness    Float @default(0)
+  avgTerminationRisk     Float @default(0)
+  avgPaymentDiscipline   Float @default(0)
   avgManagementIntegrity Float @default(0)
-  
+
   // Distributions (stored as JSON histograms: { "1": 10, "2": 5, ... })
   overallDistribution Json?
-  
+
   company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
 }
 
 model AuditLog {
-  id           String   @id @default(cuid())
-  actorUserId  String?
-  action       String   // e.g., "CREATE", "UPDATE", "DELETE"
-  entityType   String   // e.g., "Company", "Review", "User"
-  entityId     String
-  beforeJson   Json?
-  afterJson    Json?
-  createdAt    DateTime @default(now())
+  id          String   @id @default(cuid())
+  actorUserId String?
+  action      String // e.g., "CREATE", "UPDATE", "DELETE"
+  entityType  String // e.g., "Company", "Review", "User"
+  entityId    String
+  beforeJson  Json?
+  afterJson   Json?
+  createdAt   DateTime @default(now())
 
   actor User? @relation(fields: [actorUserId], references: [id], onDelete: SetNull)
 
@@ -230,19 +261,104 @@ model AuditLog {
 }
 
 model IngestionRun {
-  id              String           @id @default(cuid())
+  id              String          @id @default(cuid())
   connectorName   String
   status          IngestionStatus
-  startedAt       DateTime         @default(now())
+  startedAt       DateTime        @default(now())
   finishedAt      DateTime?
-  addedCount      Int              @default(0)
-  skippedCount    Int              @default(0)
-  errorCount      Int              @default(0)
+  addedCount      Int             @default(0)
+  skippedCount    Int             @default(0)
+  errorCount      Int             @default(0)
   errorSampleJson Json?
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
 
   @@index([connectorName])
   @@index([status])
   @@index([startedAt])
+}
+
+model IndividualProfile {
+  id             String     @id @default(cuid())
+  userId         String     @unique
+  name           String
+  surname        String
+  workerType     WorkerType
+  currentCompany String?
+  contractHouse  String?
+  placedAtClient String?
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([workerType])
+}
+
+model VendorProfile {
+  id                           String   @id @default(cuid())
+  userId                       String   @unique
+  companyName                  String
+  companyAddress               String
+  registrationNumber           String
+  businessEmail                String
+  clientsEarlyTerminationHabit Boolean  @default(false)
+  createdAt                    DateTime @default(now())
+  updatedAt                    DateTime @updatedAt
+
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  vendorClients VendorClient[]
+
+  @@index([userId])
+  @@index([companyName])
+  @@index([registrationNumber])
+}
+
+model VendorClient {
+  id                       String   @id @default(cuid())
+  vendorProfileId          String
+  clientName               String
+  staffCount               Int
+  isEarlyTerminationClient Boolean  @default(false)
+  createdAt                DateTime @default(now())
+  updatedAt                DateTime @updatedAt
+
+  vendorProfile VendorProfile @relation(fields: [vendorProfileId], references: [id], onDelete: Cascade)
+
+  @@index([vendorProfileId])
+}
+
+model CompanyProfile {
+  id                 String        @id @default(cuid())
+  userId             String        @unique
+  companyName        String
+  companyAddress     String
+  registrationNumber String
+  sector             CompanySector
+  numberOfEmployees  Int
+  businessEmail      String
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+
+  user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  companyVendors CompanyVendor[]
+
+  @@index([userId])
+  @@index([companyName])
+  @@index([registrationNumber])
+  @@index([sector])
+}
+
+model CompanyVendor {
+  id               String   @id @default(cuid())
+  companyProfileId String
+  vendorName       String
+  staffCount       Int
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  companyProfile CompanyProfile @relation(fields: [companyProfileId], references: [id], onDelete: Cascade)
+
+  @@index([companyProfileId])
 }
