@@ -12,6 +12,7 @@ const publicRoutes = [
     '/privacy',
     '/sources',
     '/terms',
+    '/onboarding', // Allow onboarding for guest entry
     '/', // Allow landing page
 ];
 

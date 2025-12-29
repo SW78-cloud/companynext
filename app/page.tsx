@@ -421,7 +421,7 @@ export default function HomePage() {
                                         </li>
                                     </ul>
                                     <Button asChild className="w-full">
-                                        <Link href="/register">
+                                        <Link href="/onboarding">
                                             Join as Employee (Free)
                                         </Link>
                                     </Button>
@@ -455,7 +455,7 @@ export default function HomePage() {
                                         </li>
                                     </ul>
                                     <Button asChild className="w-full">
-                                        <Link href="/register">
+                                        <Link href="/onboarding">
                                             Join as Contractor (Free)
                                         </Link>
                                     </Button>
@@ -592,7 +592,7 @@ export default function HomePage() {
                                     </Link>
                                 </Button>
                                 <Button asChild variant="outline" size="lg">
-                                    <Link href="/register">
+                                    <Link href="/onboarding">
                                         Create a Free Account
                                     </Link>
                                 </Button>
