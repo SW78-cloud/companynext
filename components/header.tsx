@@ -40,7 +40,7 @@ export async function Header() {
                                 <Link href="/login">Sign In</Link>
                             </Button>
                             <Button asChild size="sm">
-                                <Link href="/onboarding">Get Started</Link>
+                                <Link href="/register">Get Started</Link>
                             </Button>
                         </>
                     ) : (

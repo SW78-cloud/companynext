@@ -592,7 +592,7 @@ export default function HomePage() {
                                     </Link>
                                 </Button>
                                 <Button asChild variant="outline" size="lg">
-                                    <Link href="/onboarding">
+                                    <Link href="/register">
                                         Create a Free Account
                                     </Link>
                                 </Button>

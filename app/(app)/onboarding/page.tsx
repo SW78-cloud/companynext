@@ -24,14 +24,6 @@ export default function OnboardingPage() {
     const [accountType, setAccountType] = useState<string>('');
     const [isLoading, setIsLoading] = useState(false);
     const [isFetching, setIsFetching] = useState(true);
-    const [isGuest, setIsGuest] = useState(false);
-    const [showRegister, setShowRegister] = useState(false);
-
-    // Registration state
-    const [name, setName] = useState('');
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [regError, setRegError] = useState('');
 
     // Load initial state
     useEffect(() => {
@@ -39,9 +31,8 @@ export default function OnboardingPage() {
             try {
                 const res = await fetch('/api/auth/verification-status');
 
+                // If unauthorized, middleware should have redirected, but just in case
                 if (res.status === 401) {
-                    setIsGuest(true);
-                    setIsFetching(false);
                     return;
                 }
 
@@ -53,8 +44,6 @@ export default function OnboardingPage() {
                 }
             } catch (error) {
                 console.error('Failed to fetch status:', error);
-                // Assume guest on error to avoid blocking
-                setIsGuest(true);
             } finally {
                 setIsFetching(false);
             }
@@ -88,139 +77,13 @@ export default function OnboardingPage() {
     };
 
     const handleContinue = () => {
-        if (isGuest) {
-            setShowRegister(true);
-        } else {
-            handleSetAccountType();
-        }
-    };
-
-    const handleRegister = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setIsLoading(true);
-        setRegError('');
-
-        try {
-            // 1. Register
-            const res = await fetch('/api/auth/register', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name, email, password }),
-            });
-
-            const data = await res.json();
-
-            if (!res.ok) {
-                throw new Error(data.error || 'Registration failed');
-            }
-
-            // 2. Refresh router to update session? 
-            // Actually request needs to see the cookie. The fetch above set the cookie.
-            // But we need to update our local isGuest state.
-            setIsGuest(false);
-
-            // 3. Set Account Type immediately
-            const typeRes = await fetch('/api/onboarding/set-account-type', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ accountType }),
-            });
-
-            if (typeRes.ok) {
-                // Success - move to step 2 (Profile)
-                router.refresh(); // Refresh server components if any
-                setStep(2);
-                setShowRegister(false);
-            } else {
-                // Registration worked but type setting failed?
-                // Move to step 1 (Account Type already selected) but no longer guest
-                // Or just try to move next.
-                setStep(2);
-            }
-
-        } catch (err: any) {
-            setRegError(err.message);
-        } finally {
-            setIsLoading(false);
-        }
+        handleSetAccountType();
     };
 
     if (isFetching) {
         return (
             <div className="flex min-h-screen items-center justify-center bg-muted/5">
                 <div className="animate-pulse text-muted-foreground">Loading onboarding...</div>
-            </div>
-        );
-    }
-
-    // Render Registration Form
-    if (showRegister) {
-        return (
-            <div className="flex min-h-screen items-center justify-center px-4 bg-muted/5">
-                <Card className="w-full max-w-md">
-                    <CardHeader className="space-y-1">
-                        <CardTitle className="text-2xl font-bold text-center">Create your account</CardTitle>
-                        <CardDescription className="text-center">
-                            Save your progress as a <strong>{accountType ? accountType.toLowerCase().replace('_', ' ') : 'new user'}</strong>
-                        </CardDescription>
-                    </CardHeader>
-                    <form onSubmit={handleRegister}>
-                        <CardContent className="space-y-4">
-                            {regError && (
-                                <div className="p-3 bg-destructive/10 text-destructive text-sm rounded-md flex items-center gap-2">
-                                    <AlertCircle className="w-4 h-4" />
-                                    {regError}
-                                </div>
-                            )}
-                            <div className="space-y-2">
-                                <Label htmlFor="name">Full Name</Label>
-                                <div className="relative">
-                                    <Input
-                                        id="name"
-                                        type="text"
-                                        placeholder="John Doe"
-                                        value={name}
-                                        onChange={(e) => setName(e.target.value)}
-                                        required
-                                        className="pl-9"
-                                    />
-                                    <User className="w-4 h-4 absolute left-3 top-3 text-muted-foreground pointer-events-none" />
-                                </div>
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="email">Email</Label>
-                                <Input
-                                    id="email"
-                                    type="email"
-                                    placeholder="name@example.com"
-                                    value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
-                                    required
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="password">Password</Label>
-                                <Input
-                                    id="password"
-                                    type="password"
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
-                                    required
-                                    minLength={8}
-                                />
-                                <p className="text-xs text-muted-foreground">Must be at least 8 characters</p>
-                            </div>
-                        </CardContent>
-                        <CardFooter className="flex flex-col space-y-4">
-                            <Button type="submit" className="w-full" disabled={isLoading}>
-                                {isLoading ? 'Creating account...' : 'Create Account & Continue'}
-                            </Button>
-                            <Button variant="ghost" type="button" onClick={() => setShowRegister(false)} disabled={isLoading}>
-                                Back
-                            </Button>
-                        </CardFooter>
-                    </form>
-                </Card>
             </div>
         );
     }

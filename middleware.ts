@@ -12,7 +12,8 @@ const publicRoutes = [
     '/privacy',
     '/sources',
     '/terms',
-    '/onboarding', // Allow onboarding for guest entry
+    '/contact',
+    '/takedown',
     '/', // Allow landing page
 ];
 
@@ -30,6 +31,9 @@ export async function middleware(request: NextRequest) {
 
     // Check if route is public
     const isPublicRoute = publicRoutes.some((route) => {
+        if (route === '/') {
+            return path === '/';
+        }
         if (route.endsWith('/')) {
             return path.startsWith(route);
         }
@@ -58,10 +62,7 @@ export async function middleware(request: NextRequest) {
         if (path === '/verify-email' || path === '/logout') {
             return NextResponse.next();
         }
-        // Explicitly block /onboarding for unverified users so they are forced to verify first
-        if (path.startsWith('/onboarding')) {
-            return NextResponse.redirect(new URL('/verify-email', request.url));
-        }
+
         // Allow other public routes (like landing page, privacy policy)
         if (isPublicRoute) {
             return NextResponse.next();
