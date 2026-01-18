@@ -30,61 +30,65 @@ export default function HomePage() {
 
             <main className="flex-1">
                 {/* Hero Section */}
-                <section className="relative overflow-hidden bg-gradient-to-b from-background to-muted/20 py-20 md:py-32">
-                    <div className="container px-4">
+                <section className="relative overflow-hidden bg-navy-900 py-24 md:py-32">
+                    {/* Background Pattern */}
+                    <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10" />
+                    <div className="absolute inset-0 bg-gradient-to-b from-navy-900 via-navy-900/95 to-navy-700/50" />
+
+                    <div className="container relative px-4 mx-auto">
                         <div className="mx-auto max-w-4xl text-center">
-                            <h1 className="text-4xl font-bold tracking-tight sm:text-6xl mb-6">
+                            <h1 className="text-4xl font-bold tracking-tight text-white sm:text-6xl mb-6">
                                 Know your next company—
                                 <br />
-                                <span className="bg-gradient-to-r from-primary via-blue-600 to-purple-600 bg-clip-text text-transparent">
+                                <span className="text-orange-500">
                                     before you resign.
                                 </span>
                             </h1>
-                            <p className="text-xl text-muted-foreground mb-8 max-w-3xl mx-auto leading-relaxed">
+                            <p className="text-xl text-gray-300 mb-10 max-w-3xl mx-auto leading-relaxed">
                                 Company Next gives South Africans a clearer view of workplace culture and labour-risk signals using publicly available decisions and anonymised workforce insights.
                             </p>
 
-                            {/* Search Bar */}
-                            <div className="max-w-2xl mx-auto mb-8">
+                            {/* Search Bar Container */}
+                            <div className="max-w-2xl mx-auto mb-10 p-2 bg-white/5 rounded-xl border border-white/10 backdrop-blur-sm">
                                 <SearchBar />
-                                <p className="text-sm text-muted-foreground mt-2">
+                                <p className="text-sm text-gray-400 mt-2">
                                     Search by company name, trading name, or CIPC number
                                 </p>
                             </div>
 
                             {/* Hero CTAs */}
-                            <div className="flex flex-wrap gap-4 justify-center mb-12">
-                                <Button asChild size="lg">
+                            <div className="flex flex-wrap gap-4 justify-center mb-16">
+                                <Button asChild size="lg" className="bg-orange-500 hover:bg-orange-600 text-white border-none h-12 px-8 text-base">
                                     <Link href="/search">
-                                        <Search className="mr-2 h-4 w-4" />
+                                        <Search className="mr-2 h-5 w-5" />
                                         Search Companies
                                     </Link>
                                 </Button>
-                                <Button asChild variant="outline" size="lg">
+                                <Button asChild variant="outline" size="lg" className="border-white/20 text-white hover:bg-white/10 hover:text-white h-12 px-8 text-base bg-transparent">
                                     <Link href="/search">
                                         Browse Insights
-                                        <ChevronRight className="ml-2 h-4 w-4" />
+                                        <ChevronRight className="ml-2 h-5 w-5" />
                                     </Link>
                                 </Button>
                             </div>
 
                             {/* Trust Badges */}
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-3xl mx-auto">
-                                <div className="flex flex-col items-center gap-2 p-4 rounded-lg bg-background/50 border">
-                                    <Shield className="h-6 w-6 text-primary" />
-                                    <p className="text-xs font-medium text-center">POPIA-aligned privacy</p>
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto">
+                                <div className="flex flex-col items-center gap-2 p-4 rounded-lg bg-white/5 border border-white/10 backdrop-blur-sm">
+                                    <Shield className="h-6 w-6 text-orange-500" />
+                                    <p className="text-xs font-medium text-gray-300 text-center">POPIA-aligned privacy</p>
                                 </div>
-                                <div className="flex flex-col items-center gap-2 p-4 rounded-lg bg-background/50 border">
-                                    <Eye className="h-6 w-6 text-primary" />
-                                    <p className="text-xs font-medium text-center">Identity masked on reviews</p>
+                                <div className="flex flex-col items-center gap-2 p-4 rounded-lg bg-white/5 border border-white/10 backdrop-blur-sm">
+                                    <Eye className="h-6 w-6 text-orange-500" />
+                                    <p className="text-xs font-medium text-gray-300 text-center">Identity masked on reviews</p>
                                 </div>
-                                <div className="flex flex-col items-center gap-2 p-4 rounded-lg bg-background/50 border">
-                                    <LinkIcon className="h-6 w-6 text-primary" />
-                                    <p className="text-xs font-medium text-center">Sources linked for verification</p>
+                                <div className="flex flex-col items-center gap-2 p-4 rounded-lg bg-white/5 border border-white/10 backdrop-blur-sm">
+                                    <LinkIcon className="h-6 w-6 text-orange-500" />
+                                    <p className="text-xs font-medium text-gray-300 text-center">Sources linked for verification</p>
                                 </div>
-                                <div className="flex flex-col items-center gap-2 p-4 rounded-lg bg-background/50 border">
-                                    <Unlock className="h-6 w-6 text-primary" />
-                                    <p className="text-xs font-medium text-center">No paywall for employees</p>
+                                <div className="flex flex-col items-center gap-2 p-4 rounded-lg bg-white/5 border border-white/10 backdrop-blur-sm">
+                                    <Unlock className="h-6 w-6 text-orange-500" />
+                                    <p className="text-xs font-medium text-gray-300 text-center">No paywall for employees</p>
                                 </div>
                             </div>
                         </div>

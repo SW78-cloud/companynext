@@ -22,17 +22,42 @@ export async function sendVerificationEmail(params: SendVerificationEmailParams)
         return;
     }
 
-    // In production, implement actual email sending here
-    // Example with a real provider:
-    // await emailProvider.send({
-    //   to,
-    //   subject: 'Verify your email address',
-    //   html: generateVerificationEmailHtml(verificationUrl),
-    // });
-
-    // For now, throw an error if email is not configured in production
-    if (!process.env.EMAIL_PROVIDER_CONFIGURED) {
-        throw new Error('Email service not configured. Set EMAIL_PROVIDER_CONFIGURED=true when ready.');
+    // Production Implementation: Simple SMTP via Nodemailer (Example)
+    // You must install nodemailer: npm install nodemailer
+    /*
+    const nodemailer = await import('nodemailer');
+    
+    // Check for required env vars
+    if (!process.env.SMTP_HOST || !process.env.SMTP_USER || !process.env.SMTP_PASS) {
+        throw new Error("SMTP configuration missing. Please set SMTP_HOST, SMTP_USER, SMTP_PASS.");
     }
+
+    const transporter = nodemailer.createTransport({
+        host: process.env.SMTP_HOST,
+        port: Number(process.env.SMTP_PORT) || 587,
+        secure: process.env.SMTP_SECURE === 'true', // true for 465, false for other ports
+        auth: {
+            user: process.env.SMTP_USER,
+            pass: process.env.SMTP_PASS,
+        },
+    });
+
+    await transporter.sendMail({
+        from: process.env.SMTP_FROM || '"Company Next" <noreply@companynext.com>',
+        to,
+        subject: 'Verify your email address',
+        html: `
+            <div style="font-family: Arial, sans-serif; padding: 20px;">
+                <h2>Welcome to Company Next!</h2>
+                <p>Please click the link below to verify your email address:</p>
+                <p><a href="${verificationUrl}" style="background-color: #0070f3; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Verify Email</a></p>
+                <p>Or paste this link in your browser: <br>${verificationUrl}</p>
+            </div>
+        `,
+    });
+    */
+
+    // Placeholder to prevent crash until configured
+    console.warn("⚠️ Production email provider not yet configured. See lib/email.ts to uncomment NodeMailer logic.");
 }
 

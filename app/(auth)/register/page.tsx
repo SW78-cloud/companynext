@@ -47,7 +47,7 @@ export default function RegisterPage() {
     };
 
     return (
-        <div className="flex min-h-screen items-center justify-center px-4 bg-muted/5">
+        <>
             <Card className="w-full max-w-md">
                 <CardHeader className="space-y-1">
                     <CardTitle className="text-2xl font-bold text-center">Create an account</CardTitle>
@@ -108,9 +108,14 @@ export default function RegisterPage() {
                                 Sign in
                             </Link>
                         </div>
+                        <div className="text-sm text-center">
+                            <Link href="/register/job-seeker" className="text-muted-foreground hover:text-primary underline">
+                                Looking for a job? Register as a Job Seeker
+                            </Link>
+                        </div>
                     </CardFooter>
                 </form>
             </Card>
-        </div>
+        </>
     );
 }
