@@ -3,7 +3,6 @@ import { z } from 'zod';
 import prisma from '@/lib/db';
 import { hashPassword } from '@/lib/password';
 import { createSession } from '@/lib/auth-session';
-import { createSession } from '@/lib/auth-session';
 import { logAudit } from '@/lib/audit';
 import { sendVerificationEmail } from '@/lib/email';
 
