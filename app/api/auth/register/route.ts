@@ -3,7 +3,9 @@ import { z } from 'zod';
 import prisma from '@/lib/db';
 import { hashPassword } from '@/lib/password';
 import { createSession } from '@/lib/auth-session';
+import { createSession } from '@/lib/auth-session';
 import { logAudit } from '@/lib/audit';
+import { sendVerificationEmail } from '@/lib/email';
 
 const registerSchema = z.object({
     email: z.string().email(),
@@ -50,6 +52,17 @@ export async function POST(request: Request) {
             'NOT_STARTED', // onboardingStatus initial
             null // accountType initial
         );
+
+        // Generate simple verification token (in production use a real token store)
+        const verificationToken = Buffer.from(`${user.email}:${Date.now()}`).toString('base64');
+        const verificationUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/verify-email?token=${verificationToken}`;
+
+        // Send Email (or log in dev)
+        await sendVerificationEmail({
+            to: user.email,
+            verificationToken,
+            verificationUrl
+        });
 
         // Audit Logging
         await logAudit('USER_REGISTERED', 'User', user.id, undefined, { email: user.email, name: user.name });
